@@ -91,8 +91,8 @@ try:
     from textual.binding import Binding
     from textual.containers import Horizontal, Vertical, VerticalScroll
     from textual.screen import ModalScreen
-    from textual.widgets import (Footer, Header, Input, Label, Markdown, OptionList,
-                                 Static, TabbedContent, TabPane, TextArea)
+    from textual.widgets import (Footer, Header, Input, Label, OptionList,
+                                 Static, TextArea)
     from textual.widgets.option_list import Option
 except ImportError as exc:
     raise SystemExit(
@@ -635,11 +635,12 @@ class Companion(App):
     #status { color: $text-muted; margin-bottom: 1; }
     #queries { border-bottom: solid $primary; padding-bottom: 1; }
     #panes { height: 1fr; }
-    #results { width: 45%; border-right: solid $primary; }
+    #left-pane { width: 45%; border-right: solid $primary; }
+    #results { height: 1fr; }
     #preview-pane { width: 55%; padding: 0 1; }
     #details { height: auto; }
     #preview-status { height: auto; color: $text-muted; }
-    #preview-tabs, TabPane, #detail-scroll, #preview-source { height: 1fr; }
+    #preview-source { height: 1fr; }
     """
 
     def __init__(self, args: argparse.Namespace):
@@ -674,26 +675,21 @@ class Companion(App):
         self.details_label = Static("Write in your editor; results will appear here.",
                                     id="details", markup=False)
         self.preview_status = Static("", id="preview-status", markup=False)
-        self.preview_markdown = Markdown("", open_links=False, id="preview-markdown")
         self.preview_source = PreviewText("", read_only=True, id="preview-source")
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield self.file_label
-        yield self.counts_label
-        yield self.status_label
-        yield self.queries_label
         with Horizontal(id="panes"):
-            yield self.results_list
+            with Vertical(id="left-pane"):
+                yield self.file_label
+                yield self.counts_label
+                yield self.status_label
+                yield self.queries_label
+                yield self.results_list
             with Vertical(id="preview-pane"):
                 yield self.details_label
                 yield self.preview_status
-                with TabbedContent(id="preview-tabs"):
-                    with TabPane("Formatted", id="formatted"):
-                        with VerticalScroll(id="detail-scroll"):
-                            yield self.preview_markdown
-                    with TabPane("Select / copy text", id="source"):
-                        yield self.preview_source
+                yield self.preview_source
         yield Footer()
 
     def on_mount(self) -> None:
@@ -870,9 +866,7 @@ class Companion(App):
         self.clear_selection()
         self.preview_text = literal(text)
         self.preview_source.load_text(self.preview_text)
-        self.preview_markdown.update(self.preview_text)
         self.preview_status.update(status)
-        self.query_one("#detail-scroll", VerticalScroll).scroll_home(animate=False)
 
     def clear_preview(self) -> None:
         self.preview_version += 1
@@ -919,11 +913,7 @@ class Companion(App):
     def action_copy_preview(self) -> None:
         if isinstance(self.screen, (FileScreen, FilePicker)) or not self.preview_text:
             return
-        if self.query_one("#preview-tabs", TabbedContent).active == "source":
-            selected = self.preview_source.selected_text
-        else:
-            selected = self.screen.get_selected_text()
-        self.copy_to_clipboard(selected or self.preview_text)
+        self.copy_to_clipboard(self.preview_source.selected_text or self.preview_text)
 
     def copy_to_clipboard(self, text: str) -> None:
         """Delegate system clipboard support to Pyperclip."""
