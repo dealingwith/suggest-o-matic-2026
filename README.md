@@ -16,22 +16,27 @@ COMPANION_VENV=../.venv-<foo>
 
 ```sh
 uv venv --python 3.12 "$COMPANION_VENV"
-uv pip install --python "$COMPANION_VENV/bin/python" textual openai httpx pyperclip
+uv pip install --python "$COMPANION_VENV/bin/python" textual openai httpx pyperclip python-dotenv
 ```
 
 uv downloads Python 3.12 if it is not already available. The explicit `--python` path targets the chosen environment without needing shell activation. The commands below use `COMPANION_VENV`; set it to your chosen path again when opening a new terminal.
 
-Export your OpenAI API key, start your existing Hister server with semantic search enabled, then launch the companion:
+Put your OpenAI API key in a `.env` file beside `suggesto.py`:
+
+```dotenv
+OPENAI_API_KEY='your-api-key'
+```
+
+The existing `export OPENAI_API_KEY='your-api-key'` method also works. Exported values take precedence over `.env` values. The `.env` file is ignored by Git. Start your existing Hister server with semantic search enabled, then launch the companion:
 
 ```sh
-export OPENAI_API_KEY='your-api-key'
 uv run --no-project --python "$COMPANION_VENV/bin/python" suggesto.py --help
 uv run --no-project --python "$COMPANION_VENV/bin/python" suggesto.py test.md --word-step 250
 ```
 
 These [uv run](https://docs.astral.sh/uv/reference/cli/#uv-run) commands explicitly use the named environment's Python. `--no-project` skips Python project discovery for this standalone script. No shell activation is required. Expect `--help` to display CLI options and the launch command to open the word counter and search-results TUI.
 
-Replace `test.md` with your draft path. If Hister requires a token, also export `HISTER_ACCESS_TOKEN`. The app reads environment variables; it does not load `.env`. Its default endpoint is `http://127.0.0.1:4433/search`. Override the full endpoint with `--hister-url`, the OpenAI model with `--model` (default `gpt-6-luna`), and results per query/displayed with `--limit` (default 10, maximum 50). The endpoint must end in `/search`; an optional deployment prefix is supported (for example `http://localhost:4433/hister/search`). Existing commands that specify `--hister-url .../mcp` should switch to `.../search`.
+Replace `test.md` with your draft path. If Hister requires a token, set `HISTER_ACCESS_TOKEN` in `.env` or export it. The app uses `python-dotenv` to read `.env` beside the script. Override the full endpoint with `--hister-url`, the OpenAI model with `--model` (default `gpt-6-luna`), and results per query/displayed with `--limit` (default 10, maximum 50). The endpoint must end in `/search`; an optional deployment prefix is supported (for example `http://localhost:4433/hister/search`).
 
 Omit the file argument to open a searchable picker:
 

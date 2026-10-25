@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Watch saved Markdown and find related material in a local Hister index.
 
 Python 3.11+. See README.md for uv environment setup.
@@ -68,8 +67,13 @@ def arguments() -> argparse.Namespace:
         args.file = args.file.expanduser().resolve()
         if args.file.suffix.lower() not in {".md", ".markdown"} or not args.file.is_file():
             parser.error("file must be an existing .md or .markdown file")
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        parser.error("missing python-dotenv; install it in the companion environment")
+    load_dotenv(dotenv_path=Path(__file__).resolve().with_name(".env"), override=False)
     if not os.environ.get("OPENAI_API_KEY", "").strip():
-        parser.error("export OPENAI_API_KEY before starting (no .env file is loaded)")
+        parser.error("set OPENAI_API_KEY in the environment or in .env beside suggesto.py")
     return args
 
 
