@@ -2,6 +2,10 @@
 
 `suggesto.py` is a single-file Python 3.11+ terminal app that follows a saved Markdown draft and finds related material in your existing Hister index. The design is recorded in [MARKDOWN_COMPANION_PLAN.md](MARKDOWN_COMPANION_PLAN.md).
 
+### Hister setup
+
+Install Hister using its [installation guide](https://hister.org/docs/installing), then follow the [quickstart](https://hister.org/docs/quickstart) to run the server and index content. Enable semantic search using Hister's [semantic search configuration](https://hister.org/docs/configuration#semantic-search) before running Suggest-o-matic; Hister requires an embeddings endpoint for this feature.
+
 With [uv](https://docs.astral.sh/uv/pip/environments/) installed, choose where to create the Python environment. To use the original location inside this project:
 
 ```sh
