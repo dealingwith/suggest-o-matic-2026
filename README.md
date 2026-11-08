@@ -6,7 +6,6 @@
 
 ## Todos
 
-- [ ] Summarize why each result is relevant to the draft.
 - [ ] Support query generation with models other than OpenAI's.
 - [ ] Generate search queries without a model.
 
@@ -60,6 +59,8 @@ Select a result to see the matching passages Hister returned for each query, inc
 
 The preview is read-only and selectable. Press `c` to copy selected text, or the whole visible preview when nothing is selected. Ctrl+C copies a selection in the preview. Pyperclip handles the system clipboard, and the app verifies copied text by reading it back.
 
+Open the **Summary** tab or press `s` to get an overview and a relevance sentence for every displayed result. The tab makes one additional OpenAI request per result set, using the matched passages (or search excerpts when no passage is available), then caches the response. Switching results or tabs does not make more calls. A new successful search refreshes the summary; if summarization fails, press `s` again while on the tab to retry. The summary is based on excerpts, not full documents.
+
 ## Linux copy functionality
 
 On Linux, Pyperclip needs a working clipboard helper and desktop display connection. For Debian or Ubuntu-based systems, install the helpers with:
@@ -89,6 +90,7 @@ At least one display variable should be nonempty. A missing helper path points t
 | Enter | Open the selected result |
 | Tab | Move focus between controls |
 | `v` | Toggle matched passages and a longer preview |
+| `s` | Open the Summary tab; retry there after a summary error |
 | `c` | Copy selected text or the visible preview |
 | Ctrl+A / Ctrl+C in the preview | Select all / copy selection |
 | `q` | Quit |
@@ -133,7 +135,7 @@ The import guard checks for `httpx`, `pyperclip`, `openai`, Rich, and Textual. `
 
 ### 5. OpenAI integration
 
-`generate_queries()` sends the title and cleaned draft through the Responses API with a strict JSON schema for three queries. It sets `store=False` and `max_output_tokens=500`; only the default `gpt-6-luna` model gets `reasoning.effort=none`. The prompt treats draft text as data. The function removes punctuation that could act as Hister query operators and rejects empty or duplicate queries.
+`generate_queries()` sends the title and cleaned draft through the Responses API with a strict JSON schema for three queries. It sets `store=False` and `max_output_tokens=500`; only the default `gpt-6-luna` model gets `reasoning.effort=none`. The prompt treats draft text as data. The function removes punctuation that could act as Hister query operators and rejects empty or duplicate queries. `summarize_results()` uses one separate structured request for the current result set when the Summary tab is opened.
 
 ### 6. Result merging
 
@@ -153,7 +155,7 @@ The import guard checks for `httpx`, `pyperclip`, `openai`, Rich, and Textual. `
 
 ##### Initialization and layout
 
-`Companion` tracks the watched path, latest snapshot, last successful word-count baseline, search state, results, and preview cache. The left pane shows the file, counts, status, queries, and results; the right pane shows details and the preview.
+`Companion` tracks the watched path, latest snapshot, last successful word-count baseline, search state, results, preview cache, and summary state. The left pane shows the file, counts, status, queries, and results; the right pane shows details plus Matches and Summary tabs.
 
 ##### Polling and search threshold
 
