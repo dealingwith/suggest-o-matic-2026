@@ -32,9 +32,11 @@ Put your OpenAI API key in `.env` beside `suggesto.py`, or export it in your she
 
 ```dotenv
 OPENAI_API_KEY='your-api-key'
+# Optional; light is the default:
+# SUGGESTO_COLOR_SCHEME=dark
 ```
 
-Exported values take precedence over `.env`. The file is ignored by Git. If Hister requires a token, set `HISTER_ACCESS_TOKEN` the same way. With Hister running, launch the app with a Markdown file:
+Set `SUGGESTO_COLOR_SCHEME` to `light` or `dark` to choose the startup theme. Exported values take precedence over `.env`. The file is ignored by Git. If Hister requires a token, set `HISTER_ACCESS_TOKEN` the same way. With Hister running, launch the app with a Markdown file:
 
 ```sh
 uv run --no-project --python "$COMPANION_VENV/bin/python" suggesto.py path/to/draft.md
@@ -105,7 +107,7 @@ Previous results stay visible during searches and errors. After a failed search,
 
 ### 1. CLI argument parsing
 
-`arguments()` accepts an optional Markdown path plus `--word-step`, `--model`, `--hister-url`, `--limit`, and repeatable `--exclude-url`. It validates Python 3.11+, the file when provided, a positive word step, a result limit of 1–50, and an HTTP(S) endpoint ending in `/search`. It loads `.env` beside the script without overriding exported values and requires `OPENAI_API_KEY`. Parsing precedes optional UI and API imports, so `--help` works without those packages.
+`arguments()` accepts an optional Markdown path plus `--word-step`, `--model`, `--hister-url`, `--limit`, and repeatable `--exclude-url`. It validates Python 3.11+, the file when provided, a positive word step, a result limit of 1–50, and an HTTP(S) endpoint ending in `/search`. It loads `.env` beside the script without overriding exported values, requires `OPENAI_API_KEY`, and reads `SUGGESTO_COLOR_SCHEME` (`light` by default). Parsing precedes optional UI and API imports, so `--help` works without those packages.
 
 ### 2. Import guard
 

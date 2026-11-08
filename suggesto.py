@@ -74,6 +74,9 @@ def arguments() -> argparse.Namespace:
     load_dotenv(dotenv_path=Path(__file__).resolve().with_name(".env"), override=False)
     if not os.environ.get("OPENAI_API_KEY", "").strip():
         parser.error("set OPENAI_API_KEY in the environment or in .env beside suggesto.py")
+    args.color_scheme = os.environ.get("SUGGESTO_COLOR_SCHEME", "light").strip().lower() or "light"
+    if args.color_scheme not in {"light", "dark"}:
+        parser.error("SUGGESTO_COLOR_SCHEME must be light or dark")
     return args
 
 
@@ -633,10 +636,10 @@ class Companion(App):
     #file-path, #counts, #status, #queries { height: auto; padding: 0 1; }
     #file-path { color: $accent; text-style: bold; }
     #status { color: $text-muted; margin-bottom: 1; }
-    #queries { border-bottom: solid $primary; padding-bottom: 1; }
+    #queries { padding-bottom: 1; }
     #panes { height: 1fr; }
     #left-pane { width: 45%; border-right: solid $primary; }
-    #results { height: 1fr; }
+    #results, #results:focus { height: 1fr; border: none; }
     #preview-pane { width: 55%; padding: 0 1; }
     #details { height: auto; }
     #preview-status { height: auto; color: $text-muted; }
@@ -646,6 +649,7 @@ class Companion(App):
     def __init__(self, args: argparse.Namespace):
         super().__init__()
         self.args = args
+        self.theme = f"textual-{args.color_scheme}"
         self.path: Path | None = args.file
         self.project_root = Path(__file__).resolve().parent
         self.generation = 0
