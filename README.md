@@ -41,13 +41,13 @@ Set `SUGGESTO_COLOR_SCHEME` to `light` or `dark` to choose the startup theme. Ex
 uv run --no-project --python "$COMPANION_VENV/bin/python" suggesto.py path/to/draft.md
 ```
 
-Or omit the path to browse `.md` and `.markdown` files under `_drafts` and `_posts` beside the script:
+Pass a directory to browse its `.md` and `.markdown` files recursively:
 
 ```sh
-uv run --no-project --python "$COMPANION_VENV/bin/python" suggesto.py
+uv run --no-project --python "$COMPANION_VENV/bin/python" suggesto.py path/to/content
 ```
 
-The picker shows drafts first, then posts, in reverse path order within each directory. Type words from a path or filename to filter; it shows at most 200 matches. Use Up/Down and Enter, or click a result. Escape exits if no file has been selected. Press `b` to reopen the picker or `f` to enter any existing Markdown path. Watching and API calls begin only after the first file is chosen.
+The path is required. The picker sorts files in reverse path order. Type words from a path or filename to filter; it shows at most 200 matches. Use Up/Down and Enter, or click a result. Escape exits if no file has been selected. Press `b` to browse the launch directory again (or the launched file's parent), or `f` to enter any existing Markdown file path. Watching and API calls begin only after the first file is chosen.
 
 Run `suggesto.py --help` with the same `uv run` prefix for all options. Useful overrides are `--word-step` (default 250), `--model` (default `gpt-6-luna`), `--limit` (1–50, default 10), `--hister-url` (default `http://127.0.0.1:4433/search`), and repeatable `--exclude-url`. A custom Hister endpoint must end in `/search`; a deployment path prefix is supported. The default model uses `reasoning.effort=none` and a 500-token output limit. Other models use their own reasoning defaults with the same output limit.
 
@@ -85,7 +85,7 @@ At least one display variable should be nonempty. A missing helper path points t
 | `r` | Search the saved draft after it settles, even below the threshold or while paused |
 | `p` | Pause or resume automatic searches; an active search may finish |
 | `f` | Enter another Markdown file path; Escape cancels |
-| `b` | Browse `_drafts` and `_posts`; Escape cancels |
+| `b` | Browse the launch directory or launched file's parent; Escape cancels |
 | Up/Down | Select a result and show its details |
 | Enter | Open the selected result |
 | Tab | Move focus between controls |
@@ -109,7 +109,7 @@ Previous results stay visible during searches and errors. After a failed search,
 
 ### 1. CLI argument parsing
 
-`arguments()` accepts an optional Markdown path plus `--word-step`, `--model`, `--hister-url`, `--limit`, and repeatable `--exclude-url`. It validates Python 3.11+, the file when provided, a positive word step, a result limit of 1–50, and an HTTP(S) endpoint ending in `/search`. It loads `.env` beside the script without overriding exported values, requires `OPENAI_API_KEY`, and reads `SUGGESTO_COLOR_SCHEME` (`light` by default). Parsing precedes optional UI and API imports, so `--help` works without those packages.
+`arguments()` requires an existing Markdown file or directory, plus optional `--word-step`, `--model`, `--hister-url`, `--limit`, and repeatable `--exclude-url`. It validates Python 3.11+, a positive word step, a result limit of 1–50, and an HTTP(S) endpoint ending in `/search`. It loads `.env` beside the script without overriding exported values, requires `OPENAI_API_KEY`, and reads `SUGGESTO_COLOR_SCHEME` (`light` by default). Parsing precedes optional UI and API imports, so `--help` works without those packages.
 
 ### 2. Import guard
 
@@ -145,7 +145,7 @@ The import guard checks for `httpx`, `pyperclip`, `openai`, Rich, and Textual. `
 
 #### File picker and path dialog
 
-`FilePicker` searches files under `_drafts` and `_posts` beside the script. `FileScreen` accepts any existing `.md` or `.markdown` path when switching files.
+`FilePicker` searches Markdown files recursively under the launch directory, or the launched file's parent. `FileScreen` accepts any existing `.md` or `.markdown` path when switching files.
 
 #### Preview and clipboard
 

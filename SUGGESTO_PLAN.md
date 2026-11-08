@@ -10,7 +10,7 @@ Add `suggesto.py`: a single-file Python utility with a Textual interface. It wat
 
 - Use Python 3.11+ with `textual`, `openai`, `httpx`, and `pyperclip`; embed UI styles in the script and document setup in README.md.
 - Accept a file path and `--word-step` (250), `--model` (`gpt-6-luna`), `--hister-url` (`http://127.0.0.1:4433/search`), and `--limit` (10).
-- Make the file argument optional. Without it, show a searchable picker for Markdown files recursively under `_drafts` and `_posts` beside the script. Filter filenames by all typed words, cap visible matches at 200, and support arrows, Enter, mouse selection, and Escape. Start watching only after selection; canceling the initial picker exits. `b` reopens the picker; `f` retains manual path entry.
+- Require a Markdown file or directory argument. A file starts watching directly; a directory opens a searchable picker for Markdown files recursively beneath it. Filter paths by all typed words, cap visible matches at 200, and support arrows, Enter, mouse selection, and Escape. Start watching only after selection; canceling the initial picker exits. `b` reopens the picker for the launch directory or file's parent; `f` retains manual path entry.
 - Read `OPENAI_API_KEY` and optional `HISTER_ACCESS_TOKEN` from environment variables.
 - Poll every second; wait for two seconds of stable content. Handle atomic saves and temporarily missing files.
 - Count prose words excluding YAML front matter, fenced code, and link destinations; retain headings and visible link text.

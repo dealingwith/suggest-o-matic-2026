@@ -1,8 +1,8 @@
 """Watch saved Markdown and find related material in a local Hister index.
 
 Python 3.11+. See README.md for uv environment setup.
-Usage: uv run --no-project --python .venv-markdown-companion/bin/python
-       markdown-companion.py [path/to/draft.md]
+Usage: uv run --no-project --python .venv-suggesto/bin/python suggesto.py PATH
+PATH is an existing Markdown file or directory to browse.
 """
 
 from __future__ import annotations
@@ -35,8 +35,8 @@ def positive_integer(value: str) -> int:
 
 def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("file", type=Path, nargs="?",
-                        help="Markdown file to watch; omit to search _posts and _drafts")
+    parser.add_argument("path", type=Path,
+                        help="Markdown file to watch or directory of Markdown files to browse")
     parser.add_argument("--word-step", type=positive_integer, default=250)
     parser.add_argument("--model", default="gpt-6-luna",
                         help="OpenAI query-generation model (default: gpt-6-luna)")
@@ -63,10 +63,17 @@ def arguments() -> argparse.Namespace:
     args.hister_url = args.hister_url.rstrip("/")
     if not urlsplit(args.hister_url).path.endswith("/search"):
         parser.error("--hister-url must end in /search (replace the previous /mcp endpoint)")
-    if args.file is not None:
-        args.file = args.file.expanduser().resolve()
-        if args.file.suffix.lower() not in {".md", ".markdown"} or not args.file.is_file():
-            parser.error("file must be an existing .md or .markdown file")
+    args.path = args.path.expanduser().resolve()
+    if args.path.is_file():
+        if args.path.suffix.lower() not in {".md", ".markdown"}:
+            parser.error("file must have a .md or .markdown extension")
+        args.file = args.path
+        args.browse_root = args.path.parent
+    elif args.path.is_dir():
+        args.file = None
+        args.browse_root = args.path
+    else:
+        parser.error("path must be an existing Markdown file or directory")
     try:
         from dotenv import load_dotenv
     except ImportError:
@@ -523,15 +530,10 @@ async def summarize_results(client: AsyncOpenAI, model: str, snapshot: Snapshot,
 
 
 def picker_files(root: Path) -> list[tuple[Path, str]]:
-    files = []
-    for directory in ("_drafts", "_posts"):
-        folder = root / directory
-        if folder.is_dir():
-            paths = sorted((path for path in folder.rglob("*")
-                            if path.suffix.lower() in {".md", ".markdown"} and path.is_file()),
-                           key=lambda path: str(path.relative_to(folder)).casefold(), reverse=True)
-            files.extend((path.resolve(), str(path.relative_to(root))) for path in paths)
-    return files
+    paths = sorted((path for path in root.rglob("*")
+                    if path.suffix.lower() in {".md", ".markdown"} and path.is_file()),
+                   key=lambda path: str(path.relative_to(root)).casefold(), reverse=True)
+    return [(path.resolve(), str(path.relative_to(root))) for path in paths]
 
 
 class FilePicker(ModalScreen[Path | None]):
@@ -557,7 +559,7 @@ class FilePicker(ModalScreen[Path | None]):
             yield Static("Choose a Markdown file · type to filter · ↑/↓ select · Enter watch · Escape cancel",
                          id="picker-heading", markup=False)
             yield Input(placeholder="Search filenames (for example: ai systems)", id="picker-search")
-            yield Static("Loading _drafts and _posts…", id="picker-status", markup=False)
+            yield Static("Loading Markdown files…", id="picker-status", markup=False)
             yield OptionList(id="picker-files")
 
     def on_mount(self) -> None:
@@ -595,7 +597,7 @@ class FilePicker(ModalScreen[Path | None]):
         if self.visible_files:
             options.highlighted = 0
         if not self.files:
-            status = "No Markdown files in _drafts or _posts beside this script. Escape to cancel."
+            status = "No Markdown files in this directory. Escape to cancel."
         elif not matches:
             status = "No matching filenames. Try fewer search terms."
         else:
@@ -713,7 +715,7 @@ class Companion(App):
         self.args = args
         self.theme = f"textual-{args.color_scheme}"
         self.path: Path | None = args.file
-        self.project_root = Path(__file__).resolve().parent
+        self.browse_root: Path = args.browse_root
         self.generation = 0
         self.snapshot: Snapshot | None = None
         self.changed_at = 0.0
@@ -1145,7 +1147,7 @@ class Companion(App):
 
     def action_browse(self) -> None:
         if not isinstance(self.screen, ModalScreen):
-            self.push_screen(FilePicker(self.project_root), self.picked_file)
+            self.push_screen(FilePicker(self.browse_root), self.picked_file)
 
     def picked_file(self, path: Path | None) -> None:
         if path is None and self.path is None:
